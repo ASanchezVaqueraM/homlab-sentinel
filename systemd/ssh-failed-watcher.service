@@ -1,0 +1,12 @@
+[Unit]
+Description=Centinela de Intentos Fallidos SSH para Telegram
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/ssh-failed-watcher.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
