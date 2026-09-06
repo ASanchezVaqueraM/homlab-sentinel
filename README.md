@@ -1,9 +1,9 @@
-# 🛡️ Homelab Sentinel: Arquitectura de Acceso Remoto Seguro, Monitorización y Hardening
+# Homelab Sentinel: Arquitectura de Acceso Remoto Seguro, Monitorización y Hardening
 
 *Nodo perimetral doméstico basado en **Raspberry Pi 4B** concebido para la administración desatendida y segura desde redes externas hostiles, incorporando túneles VPN redundantes, filtrado DNS, bastionado de claves asimétricas y un pipeline centinela de alertas push en tiempo real a Telegram.*
 
 
-## 📋 Tabla de Contenidos
+## Tabla de Contenidos
 
 - [1. Resumen Ejecutivo y Alcance](#1-resumen-ejecutivo-y-alcance)
 - [2. Arquitectura del Sistema](#2-arquitectura-del-sistema)
