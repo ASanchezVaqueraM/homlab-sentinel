@@ -7,3 +7,12 @@ secrets/
 *.log
 .DS_Store
 Thumbs.db
+---
+
+### Actualización en `.gitignore`
+Para asegurar que nunca se filtre un archivo de configuración real por error, añade estas dos líneas a tu `.gitignore` en la raíz:
+
+```text
+# Excluir perfiles reales de WireGuard
+vpn/*.conf
+!vpn/*.example.conf
