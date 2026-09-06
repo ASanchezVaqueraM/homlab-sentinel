@@ -46,7 +46,7 @@ El sistema canaliza telemetría crítica e incidentes de seguridad en tiempo rea
 │                                          └────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────────────────────────────┘
 ---
-
+```
 ## 3. Matriz de Componentes y Stack Tecnológico
 
 | Componente | Rol / Función | Justificación Técnica |
@@ -70,7 +70,7 @@ Se descarta el uso tradicional de contraseñas para erradicar ataques de fuerza 
 1. **Generación de pares de claves asimétricas en clientes:**
    ```bash
    ssh-keygen -t ed25519 -C "alvaro-dispositivo"
-   ```
+   
 2. **Despliegue de la clave pública en el servidor (`~/.ssh/authorized_keys`):**
    ```bash
    mkdir -p ~/.ssh && chmod 700 ~/.ssh
