@@ -1,0 +1,5 @@
+# Levantar el contenedor en segundo plano
+docker compose up -d
+
+# Comprobar logs si es necesario
+docker compose logs -f
