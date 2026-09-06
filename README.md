@@ -2,22 +2,6 @@
 
 *Nodo perimetral doméstico basado en **Raspberry Pi 4B** concebido para la administración desatendida y segura desde redes externas hostiles, incorporando túneles VPN redundantes, filtrado DNS, bastionado de claves asimétricas y un pipeline centinela de alertas push en tiempo real a Telegram.*
 
----
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Hardware-Raspberry%20Pi%204B-C51A4A?style=for-the-badge&logo=raspberry-pi&logoColor=white" alt="Raspberry Pi 4B" />
-  <img src="https://img.shields.io/badge/VPN-WireGuard-88171A?style=for-the-badge&logo=wireguard&logoColor=white" alt="WireGuard" />
-  <img src="https://img.shields.io/badge/Mesh%20VPN-Tailscale-4B4B4B?style=for-the-badge&logo=tailscale&logoColor=white" alt="Tailscale" />
-  <img src="https://img.shields.io/badge/DNS-Pi--hole-960000?style=for-the-badge&logo=pi-hole&logoColor=white" alt="Pi-hole" />
-  <img src="https://img.shields.io/badge/Security-OpenSSH%20%2B%20Ed25519-black?style=for-the-badge&logo=openbsd&logoColor=white" alt="OpenSSH" />
-  <img src="https://img.shields.io/badge/IPS-Fail2ban-333333?style=for-the-badge" alt="Fail2ban" />
-  <img src="https://img.shields.io/badge/Monitoring-Uptime%20Kuma-5CD68D?style=for-the-badge&logo=uptime-kuma&logoColor=white" alt="Uptime Kuma" />
-  <img src="https://img.shields.io/badge/Alerts-Telegram%20Bot%20API-26A5E4?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram API" />
-  <img src="https://img.shields.io/badge/Containers-Docker%20%26%20Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
-  <img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="MIT License" />
-</p>
-
----
 
 ## 📋 Tabla de Contenidos
 
@@ -42,10 +26,10 @@ Este proyecto documenta el diseño, despliegue e implementación de un nodo peri
 
 El objetivo central es permitir la administración desatendida y segura del entorno local desde redes externas hostiles, garantizando:
 
-* 🔐 **Acceso cifrado punto a punto:** Túnel principal WireGuard respaldado por DuckDNS para IPs dinámicas, con topología de respaldo mediante malla Tailscale (inmunidad a CG-NAT y puertos bloqueados).
-* 🛡️ **Filtrado DNS y privacidad perimetral:** Integración local con Pi-hole para el bloqueo de telemetría y publicidad en todos los clientes tunelizados.
-* 🔑 **Bastionado de autenticación:** Acceso administrativo mediante claves asimétricas `Ed25519`, desactivación total de contraseñas y defensa activa reactiva con Fail2ban.
-* 📲 **Telemetría y observabilidad:** Alertas push en tiempo real hacia Telegram para accesos, intentos de intrusión y rearranques, complementado con sondas activas en Uptime Kuma mediante Docker.
+**Acceso cifrado punto a punto:** Túnel principal WireGuard respaldado por DuckDNS para IPs dinámicas, con topología de respaldo mediante malla Tailscale (inmunidad a CG-NAT y puertos bloqueados).
+**Filtrado DNS y privacidad perimetral:** Integración local con Pi-hole para el bloqueo de telemetría y publicidad en todos los clientes tunelizados.
+**Bastionado de autenticación:** Acceso administrativo mediante claves asimétricas `Ed25519`, desactivación total de contraseñas y defensa activa reactiva con Fail2ban.
+**Telemetría y observabilidad:** Alertas push en tiempo real hacia Telegram para accesos, intentos de intrusión y rearranques, complementado con sondas activas en Uptime Kuma mediante Docker.
 
 ---
 
@@ -324,10 +308,10 @@ volumes:
 ```
 
 #### Sondas de Monitorización Configuradas:
-* 🖥️ **PC Sobremesa / LAN:** Monitor ICMP Ping periódico hacia la IP interna de la LAN.
-* 🌐 **DNS / Pi-hole:** Sonda de resolución DNS hacia `127.0.0.1:53` verificando respuesta ante peticiones de dominio.
-* 🛰️ **Gateway WAN:** Sonda ICMP hacia `1.1.1.1` para alertar caídas del ISP o cortes de fibra.
-* 📲 **Canal de Alerta:** Webhook nativo configurado hacia Telegram Bot API.
+**PC Sobremesa / LAN:** Monitor ICMP Ping periódico hacia la IP interna de la LAN.
+**DNS / Pi-hole:** Sonda de resolución DNS hacia `127.0.0.1:53` verificando respuesta ante peticiones de dominio.
+**Gateway WAN:** Sonda ICMP hacia `1.1.1.1` para alertar caídas del ISP o cortes de fibra.
+**Canal de Alerta:** Webhook nativo configurado hacia Telegram Bot API.
 
 ---
 
