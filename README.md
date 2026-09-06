@@ -61,7 +61,16 @@ El objetivo central es permitir la administración desatendida y segura del ento
 ```
 ## 3. Matriz de Componentes y Stack Tecnológico
 
-CapaComponenteFunción TécnicaJustificación  MDAcceso RemotoWireGuardTúnel VPN de capa 3Cifrado ChaCha20-Poly1305, mínimo consumo de CPU en SoC ARM y latencia negligible.RedundanciaTailscaleVPN mesh de emergenciaConectividad segura mediante NAT Traversal (DERP) si la IP dinámica o el reenvío de puertos falla.Resolución DinámicaDuckDNSSincronización DDNSMapeo continuo de la dirección WAN dinámica del ISP hacia el endpoint WireGuard.Filtrado DNSPi-holeDNS Sinkhole perimetralResolución local (127.0.0.1:53) con bloqueo de telemetría y dominios de rastreo para los clientes VPN.Acceso de GestiónOpenSSHConsola administrativaClaves asimétricas Ed25519 exclusivas, eliminación de vector por fuerza bruta (PasswordAuthentication no).  Defensa ActivaFail2banDetección y bloqueo IPSMonitorización de fallos de autenticación con aislamiento dinámico de IPs atacantes vía Netfilter/iptables.  Event WatcherBash DaemonVigilancia proactivaAnálisis en flujo continuo (journalctl -u ssh -f) de accesos fallidos antes del umbral de baneo.  MonitorizaciónUptime KumaObservabilidad de nodosDespliegue contenerizado en Docker; sondeo ICMP/DNS de hosts internos y canal WAN con webhook nativo a Telegram
+| Capa | Componente | Función Técnica | Justificación |
+| :--- | :--- | :--- | :--- |
+| Acceso Remoto | **WireGuard** | Túnel VPN de capa 3 | Cifrado ChaCha20-Poly1305, mínimo consumo de CPU en SoC ARM y latencia negligible. |
+| Redundancia | **Tailscale** | VPN mesh de emergencia | Conectividad segura mediante NAT Traversal (DERP) si la IP dinámica o el reenvío de puertos falla. |
+| Resolución Dinámica | **DuckDNS** | Sincronización DDNS | Mapeo continuo de la dirección WAN dinámica del ISP hacia el endpoint WireGuard. |
+| Filtrado DNS | **Pi-hole** | DNS Sinkhole perimetral | Resolución local (127.0.0.1:53) con bloqueo de telemetría y dominios de rastreo para los clientes VPN. |
+| Acceso de Gestión | **OpenSSH** | Consola administrativa | Claves asimétricas Ed25519 exclusivas, eliminación de vector por fuerza bruta (PasswordAuthentication no). |
+| Defensa Activa | **Fail2ban** | Detección y bloqueo IPS | Monitorización de fallos de autenticación con aislamiento dinámico de IPs atacantes vía Netfilter/iptables. |
+| Event Watcher | **Bash Daemon** | Vigilancia proactiva | Análisis en flujo continuo (journalctl -u ssh -f) de accesos fallidos antes del umbral de baneo. |
+| Monitorización | **Uptime Kuma** | Observabilidad de nodos | Despliegue contenerizado en Docker; sondeo ICMP/DNS de hosts internos y canal WAN con webhook nativo a Telegram |
 
 ---
 
