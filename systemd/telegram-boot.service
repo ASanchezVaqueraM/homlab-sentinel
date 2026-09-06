@@ -1,0 +1,11 @@
+[Unit]
+Description=Notificación de Arranque de Sistema por Telegram
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/telegram-notify "🟢 <b>Raspberry Pi Operativa</b>%0AEl sistema ha completado el arranque y la red está en línea."
+
+[Install]
+WantedBy=multi-user.target
