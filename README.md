@@ -1,63 +1,67 @@
-# Homelab Sentinel: Monitorización, Alertas en Tiempo Real y Hardening para Raspberry Pi
+# Homelab Sentinel: Arquitectura de Acceso Remoto Seguro, Monitorización y Hardening
 
 ## 1. Resumen Ejecutivo y Alcance
 
-Este proyecto documenta el diseño, fortificación (*hardening*) e implementación de un ecosistema de monitorización proactiva y seguridad perimetral para un nodo doméstico basado en **Raspberry Pi 4B**. El propósito central es garantizar la operatividad continua, trazabilidad inmediata de eventos de red y resistencia frente a vectores de ataque por fuerza bruta o accesos no autorizados, permitiendo una gestión desatendida y segura.
+Este proyecto documenta el diseño, despliegue e implementación de un nodo perimetral doméstico basado en **Raspberry Pi 4B**, concebido como servidor de acceso remoto seguro, filtrado DNS, monitorización activa y bastionado de servicios.
 
-El sistema canaliza telemetría crítica e incidentes de seguridad en tiempo real hacia un bot privado de **Telegram**, integrando monitorización pasiva a nivel de kernel/servicios y monitorización activa de conectividad local e Internet mediante contenedores Docker.
+El objetivo central es permitir la administración desatendida y segura del entorno local desde redes externas hostiles, garantizando:
+* **Acceso cifrado punto a punto:** Túnel principal WireGuard respaldado por DuckDNS para IPs dinámicas, con topología de respaldo mediante malla Tailscale (inmunidad a CG-NAT y puertos bloqueados).
+* **Filtrado DNS y privacidad perimetral:** Integración local con Pi-hole para el bloqueo de telemetría y publicidad en todos los clientes tunelizados.
+* **Bastionado de autenticación:** Acceso administrativo mediante claves asimétricas `Ed25519`, desactivación total de contraseñas y defensa activa reactiva con Fail2ban.
+* **Telemetría y observabilidad:** Alertas push en tiempo real hacia Telegram para accesos, intentos de intrusión y rearranques, complementado con sondas activas en Uptime Kuma mediante Docker.
 
 ---
 
 ## 2. Arquitectura del Sistema
 ```text
-              ┌────────────────────────────────────────────────────────┐
-              │                 Dispositivos Cliente                   │
-              │   (Mac Air / PC Sobremesa / Google Pixel 10 Pro)       │
-              └───────────────────────────┬────────────────────────────┘
-                                          │ SSH (Claves Ed25519)
-                                          ▼
-┌──────────────────────────────────────────────────────────────────────────────────────┐
-│                             Raspberry Pi 4B                                          │
-│                                                                                      │
-│  ┌──────────────────────┐  ┌─────────────────────┐  ┌─────────────────┐              │
-│  │   ssh-failed-watcher │  │   ssh-login-alert   │  │  systemd boot   │              │
-│  │    (journalctl log)  │  │  (/etc/profile.d)   │  │ (systemd unit)  │              │
-│  └──────────┬───────────┘  └──────────┬──────────┘  └────────┬────────┘              │
-│             │                         │                      │                       │
-│             └──────────────────┬──────┴──────────────────────┘                       │
-│                                │                                                     │
-│  ┌──────────────────────┐      ▼                                                     │
-│  │  Fail2ban Intrusion  │──▶ telegram-notify ──┐                                     │
-│  │  (iptables jail/ban) │    (/usr/local/bin)  │                                     │
-│  └──────────────────────┘                      │                                     │
-│                                                │                                     │
-│  ┌──────────────────────────────────────────┐  │                                     │
-│  │  Docker: Uptime Kuma Engine              │  │                                     │
-│  │  - ICMP Ping (PC Sobremesa / Gateway)    │──┼───────────────────────────┐         │
-│  │  - DNS Probe (Local Pi-hole port 53)     │  │                           │         │
-│  └──────────────────────────────────────────┘  │                           │         │
-│                                                │                           │         │
-│                                                │                           │         │
-│                                                │      HTTPS POST API       │         │
-│                                                ▼                           ▼         │
-│                                          ┌────────────────────────────────────────┐  │
-│                                          │        Telegram Bot API / Chat         │  │
-│                                          │         Notificaciones Push            │  │
-│                                          └────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────────────────────────────────┘
----
+       ┌─────────────────────────────────────────────────────────────┐
+       │                    Dispositivos Cliente                     │
+       │        (Mac Air / PC Sobremesa / Dispositivos Móviles)      │
+       └──────────────────────────────┬──────────────────────────────┘
+                                      │
+              ┌───────────────────────┴───────────────────────┐
+              │                                               │
+              ▼ (Túnel Principal UDP)                         ▼ (Malla Respaldo / CG-NAT)
+       ┌──────────────┐                               ┌──────────────┐
+       │  WireGuard   │                               │  Tailscale   │
+       │ (w/ DuckDNS) │                               │  (Mesh Peer) │
+       └──────┬───────┘                               └───────┬──────┘
+              │                                               │
+              └───────────────────────┬───────────────────────┘
+                                      │ Enlace Cifrado Local
+                                      ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              Raspberry Pi 4B                                │
+│                                                                             │
+│  ┌───────────────────────┐  ┌──────────────────────┐  ┌──────────────────┐  │
+│  │   ssh-failed-watcher  │  │   ssh-login-alert    │  │   systemd boot   │  │
+│  │    (journalctl log)   │  │  (/etc/profile.d)    │  │  (systemd unit)  │  │
+│  └───────────┬───────────┘  └──────────┬───────────┘  └─────────┬────────┘  │
+│              │                         │                        │           │
+│              └──────────────────┬──────┴────────────────────────┘           │
+│                                 │                                           │
+│  ┌───────────────────────┐      ▼                                           │
+│  │  Fail2ban Intrusion   │──▶ telegram-notify ──┐                           │
+│  │  (iptables jail/ban)  │    (/usr/local/bin)  │                           │
+│  └───────────────────────┘                      │                           │
+│                                                 │                           │
+│  ┌───────────────────────────────────────────┐  │                           │
+│  │  Servicios Base & Contenedores Docker     │  │                           │
+│  │  - Pi-hole: Filtrado DNS local (puerto 53)│  │                           │
+│  │  - Uptime Kuma: Sondas ICMP / DNS         │──┼───────────────────────────┼──┐
+│  └───────────────────────────────────────────┘  │                           │  │
+└─────────────────────────────────────────────────┼───────────────────────────┘  │
+                                                  │                              │
+                                                  │ HTTPS POST API               │
+                                                  ▼                              ▼
+                                       ┌─────────────────────────────────────────┐
+                                       │         Telegram Bot API / Chat         │
+                                       │          Notificaciones Push            │
+                                       └─────────────────────────────────────────┘
 ```
 ## 3. Matriz de Componentes y Stack Tecnológico
 
-| Componente | Rol / Función | Justificación Técnica |
-| :--- | :--- | :--- |
-| **OpenSSH Server** | Acceso remoto y administración | Cifrado asimétrico `Ed25519`, desactivación total de contraseñas (`PasswordAuthentication no`). |
-| **Telegram Bot API** | Canal de alerta omnicanal | Push notifications instantáneas sin dependencia de brokers MQTT o apps de terceros propietarias. |
-| **Fail2ban** | Detección y bloqueo reactivo | Monitorización de registros de autenticación y aplicación dinámica de bloqueos en Netfilter/iptables. |
-| **Watcher Bash Daemon** | Detección proactiva a nivel evento | Lectura continua en stream (`journalctl -u ssh -f`) de intentos fallidos antes del umbral de ban. |
-| **Systemd Services** | Automatización y persistencia | Gestión del ciclo de vida de los scripts vigilantes y alerta tras rearranque o cortes de alimentación. |
-| **Docker Engine** | Entorno de virtualización ligera | Aislamiento del monitor de estado sin ensuciar las dependencias base de la distribución. |
-| **Uptime Kuma** | Monitorización continua de red | Sondas ICMP/DNS de baja sobrecarga con alertas directas integradas vía webhook Telegram. |
+CapaComponenteFunción TécnicaJustificación  MDAcceso RemotoWireGuardTúnel VPN de capa 3Cifrado ChaCha20-Poly1305, mínimo consumo de CPU en SoC ARM y latencia negligible.RedundanciaTailscaleVPN mesh de emergenciaConectividad segura mediante NAT Traversal (DERP) si la IP dinámica o el reenvío de puertos falla.Resolución DinámicaDuckDNSSincronización DDNSMapeo continuo de la dirección WAN dinámica del ISP hacia el endpoint WireGuard.Filtrado DNSPi-holeDNS Sinkhole perimetralResolución local (127.0.0.1:53) con bloqueo de telemetría y dominios de rastreo para los clientes VPN.Acceso de GestiónOpenSSHConsola administrativaClaves asimétricas Ed25519 exclusivas, eliminación de vector por fuerza bruta (PasswordAuthentication no).  Defensa ActivaFail2banDetección y bloqueo IPSMonitorización de fallos de autenticación con aislamiento dinámico de IPs atacantes vía Netfilter/iptables.  Event WatcherBash DaemonVigilancia proactivaAnálisis en flujo continuo (journalctl -u ssh -f) de accesos fallidos antes del umbral de baneo.  MonitorizaciónUptime KumaObservabilidad de nodosDespliegue contenerizado en Docker; sondeo ICMP/DNS de hosts internos y canal WAN con webhook nativo a Telegram
 
 ---
 
