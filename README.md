@@ -76,50 +76,68 @@ El objetivo central es permitir la administración desatendida y segura del ento
 
 ## 4. Implementación Técnica Paso a Paso
 
-### 4.1. Hardening Criptográfico SSH (Claves Ed25519)
+### 4.1. Acceso Remoto Seguro y Redundancia (WireGuard + Tailscale)
+Configuración del Servidor WireGuard (/etc/wireguard/wg0.conf):  
 
-Se descarta el uso tradicional de contraseñas para erradicar ataques de fuerza bruta y diccionarios automatizados:
+[Interface]
+Address = 10.6.0.1/24
+ListenPort = 51820
+PrivateKey = <SERVER_PRIVATE_KEY>
+PostUp = iptables -A FORWARD -i %i -j ACCEPT; iptables -A FORWARD -o %i -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+PostDown = iptables -D FORWARD -i %i -j ACCEPT; iptables -D FORWARD -o %i -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
 
-1. **Generación de pares de claves asimétricas en clientes:**
-   ```bash
-   ssh-keygen -t ed25519 -C "alvaro-dispositivo"
-   
-2. **Despliegue de la clave pública en el servidor (`~/.ssh/authorized_keys`):**
-   ```bash
-   mkdir -p ~/.ssh && chmod 700 ~/.ssh
-   echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5... alvaro-dispositivo" >> ~/.ssh/authorized_keys
-   chmod 600 ~/.ssh/authorized_keys
-   ```
-3. **Bloqueo en `/etc/ssh/sshd_config`:**
-   ```ini
-   PubkeyAuthentication yes
-   PasswordAuthentication no
-   PermitEmptyPasswords no
-   X11Forwarding no
-   ```
-4. **Reinicio seguro tras comprobación de sintaxis:**
-   ```bash
-   sudo sshd -t && sudo systemctl restart ssh
-   ```
+[Peer]
+PublicKey = <CLIENT_PUBLIC_KEY>
+AllowedIPs = 10.6.0.2/32
+
+Perfil del Cliente (client.conf):
+
+[Interface]
+PrivateKey = <CLIENT_PRIVATE_KEY>
+Address = 10.6.0.2/24
+DNS = 10.6.0.1
+
+[Peer]
+PublicKey = <SERVER_PUBLIC_KEY>
+Endpoint = tu-subdominio.duckdns.org:51820
+AllowedIPs = 0.0.0.0/0, ::/0
+PersistentKeepalive = 25
+
+Nodo de Respaldo Tailscale:
+
+Bash
+sudo tailscale up --advertise-routes=192.168.1.0/24 --accept-dns=false
+
+```
 
 ---
 
-### 4.2. Conector Central de Notificaciones (`telegram-notify`)
+### 4.2. Bastionado Criptográfico SSH (Claves Ed25519)
 
-Script modular en `/usr/local/bin/telegram-notify` con permisos `755`:
+Generación del par de claves en el cliente:
 
 ```bash
-#!/bin/bash
-TOKEN="<TELEGRAM_BOT_TOKEN>"
-CHAT_ID="<TELEGRAM_CHAT_ID>"
-MENSAJE="$1"
+ssh-keygen -t ed25519 -C "admin-nodo"
 
-if [ -n "$MENSAJE" ]; then
-  curl -s -X POST "[https://api.telegram.org/bot$](https://api.telegram.org/bot$){TOKEN}/sendMessage" \
-       -d "chat_id=${CHAT_ID}" \
-       -d "text=${MENSAJE}" \
-       -d "parse_mode=HTML" > /dev/null
-fi
+Despliegue de la clave pública en ~/.ssh/authorized_keys:
+
+```bash
+mkdir -p ~/.ssh && chmod 700 ~/.ssh
+echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5... admin-nodo" >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+
+Hardening en /etc/ssh/sshd_config:
+
+PubkeyAuthentication yes
+PasswordAuthentication no
+PermitEmptyPasswords no
+X11Forwarding no
+
+Validación de sintaxis y reinicio:
+
+```bash
+sudo sshd -t && sudo systemctl restart ssh
+
 ```
 
 ---
